@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Money Collector - Made with Ludo.ai</title>
+    <meta name="description" content="Interactive playable game created with Ludo.ai - AI-powered game development platform">
+    <meta name="generator" content="Ludo.ai">
+    <meta name="author" content="Ludo.ai">
+    <meta name="keywords" content="playable game, interactive, AI-generated, Ludo.ai, pixijs">
+    <meta name="created-date" content="2025-09-28">
+    <meta name="game-engine" content="pixijs">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .game-header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            flex-shrink: 0;
+        }
+        .game-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+            color: #fff;
+        }
+        .game-info {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0;
+        }
+        .game-description {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 8px 0 0 0;
+            line-height: 1.4;
+        }
+        .game-engine {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            margin-left: 8px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        #gameContainer {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 0;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100vw;
+            max-height: 100vh;
+            width: auto;
+            height: auto;
+        }
+        body > canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+        .ludo-footer {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 11px;
+            text-decoration: none;
+            border-top-left-radius: 4px;
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+        .ludo-footer:hover {
+            background: rgba(0, 0, 0, 0.9);
+            color: rgba(255, 255, 255, 0.9);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1 class="game-title">Smart Money Collector</h1>
+        <p class="game-info">
+            Created with Ludo.ai on 2025-09-28
+            <span class="game-engine">pixijs</span>
+        </p>
+        <p class="game-description">Smart Money Collector is a fast-paced arcade game where players control a character to catch falling 'good' financial items and avoid 'bad' ones. The goal is to build a high score by maintaining streaks of successful catches while managing lives.</p>
+        <p class="game-description"><strong>How to Play:</strong> Use left/right arrow keys or A/D to move your character. On mobile, drag left or right. Catch good items (green labels) for points and to increase your streak. Avoid bad items (red labels) to prevent losing lives. Press Space to pause. The game ends when you run out of lives.</p>
+    </div>
+    <div id="gameContainer"></div>
+    <a href="https://ludo.ai" target="_blank" class="ludo-footer">
+        Made with Ludo.ai
+    </a>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.3/pixi.min.js" integrity="sha512-o3fAFcbCbTTJRFRNx4vByRZVtdKYF9uklctNjDXrN1JjT00rJxCCyNJSDi35rPBEqzWvYplcHLlEmyW34Ado8A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><script src="https://cdn.jsdelivr.net/npm/pixi-filters@5.3.0/dist/browser/pixi-filters.min.js"></script>
+    <script type="module">
+        // Ludo.ai Playable Game
+        // Generated on: 2025-09-28
+        // Engine: pixijs
+        // Title: Smart Money Collector
+        
+        // Monitor for canvas elements and move them to gameContainer
+        const gameContainer = document.getElementById('gameContainer');
+        
+        // Function to move canvas elements to gameContainer
+        function moveCanvasToContainer() {
+            const canvases = document.querySelectorAll('body > canvas');
+            canvases.forEach(canvas => {
+                if (canvas.parentElement === document.body) {
+                    gameContainer.appendChild(canvas);
+                }
+            });
+        }
+        
+        // Monitor for new canvas elements
+        const observer = new MutationObserver(() => {
+            moveCanvasToContainer();
+        });
+        observer.observe(document.body, { childList: true });
+        
+        // Initial check
+        setTimeout(moveCanvasToContainer, 100);
+        
+        const GAME_WIDTH = 800;
+const GAME_HEIGHT = 600;
+const BG_COLOR_TOP = 0x87ceeb;
+const BG_COLOR_BOTTOM = 0xe0f6ff;
+const UI_HEIGHT = 60;
+const PLAYER_Y = GAME_HEIGHT - 100;
+const PLAYER_WIDTH = 60;
+const PLAYER_HEIGHT = 100;
+const PLAYER_HITBOX_W = 50;
+const PLAYER_HITBOX_H = 100;
+const ITEM_SIZE = 40;
+const ITEM_LABEL_W = 80;
+const ITEM_LABEL_H = 20;
+const ITEM_LABEL_FONT_SIZE = 18;
+const SPAWN_MARGIN = 80;
+const HEART_SIZE = 32;
+const MAX_LIVES = 3;
+const STREAK_MAX = 3;
+const START_SPEED = 2;
+const MAX_SPEED = 5;
+const START_SPAWN_RATE = 1;
+const MAX_SPAWN_RATE = 3;
+const RAMP_INTERVAL = 15;
+const DECOY_INTRO_TIME = 30;
+const PARTICLE_COUNT = 8;
+const PARTICLE_DURATION = 30;
+const SHAKE_DURATION = 18;
+const SHAKE_MAG = 2;
+const STATE_INTRO = 0;
+const STATE_PLAY = 1;
+const STATE_PAUSE = 2;
+const STATE_GAMEOVER = 3;
+const GOOD_ITEMS = [
+  { key: 'coin', label: 'Savings' },
+  { key: 'bill', label: 'Budgeting' },
+  { key: 'card', label: 'On-time payment' },
+  { key: 'etf', label: 'Long-term invest' }
+];
+const BAD_ITEMS = [
+  { key: 'overdue', label: 'Late fee' },
+  { key: 'phish', label: 'Phishing' },
+  { key: 'bag', label: 'Overspend' },
+  { key: 'ticket', label: 'Get-rich-quick' }
+];
+const DECOY_ITEMS = [
+  { key: 'phish', label: 'Phishing', good: true },
+  { key: 'coin', label: 'Savings', good: false },
+  { key: 'card', label: 'On-time payment', good: false },
+  { key: 'bag', label: 'Overspend', good: true }
+];
+let app = new PIXI.Application({
+  width: GAME_WIDTH,
+  height: GAME_HEIGHT,
+  backgroundColor: 0x1099bb,
+  antialias: true,
+  resolution: 1
+});
+document.body.appendChild(app.view);
+class Game {
+  constructor() {
+    this.state = STATE_INTRO;
+    this.elapsed = 0;
+    this.introAlpha = 1;
+    this.fadeDir = -1;
+    this.fadeTimer = 0;
+    this.score = 0;
+    this.streak = 1;
+    this.lives = MAX_LIVES;
+    this.bestScore = Number(localStorage.getItem('smc_best')) || 0;
+    this.spawnTimer = 0;
+    this.spawnRate = START_SPAWN_RATE;
+    this.speed = START_SPEED;
+    this.rampTimer = 0;
+    this.decoyOn = false;
+    this.items = [];
+    this.particles = [];
+    this.shakeTime = 0;
+    this.shakeMag = 0;
+    this.ui = new PIXI.Container();
+    this.world = new PIXI.Container();
+    this.overlay = new PIXI.Container();
+    this.bg = new PIXI.Container();
+    this.setupBackground();
+    app.stage.addChild(this.bg);
+    app.stage.addChild(this.world);
+    app.stage.addChild(this.ui);
+    app.stage.addChild(this.overlay);
+    this.overlay.visible = false;
+    this.drawUI();
+    this.player = this.makePlayer();
+    this.world.addChild(this.player.container);
+    this.inputDir = 0;
+    this.inputLeft = false;
+    this.inputRight = false;
+    this.inputTouchId = null;
+    this.inputTouchX = null;
+    this.paused = false;
+    this.pauseAlpha = 0;
+    this.pauseOverlay = new PIXI.Graphics();
+    this.overlay.addChild(this.pauseOverlay);
+    this.gameOverAlpha = 0;
+    this.gameOverOverlay = new PIXI.Container();
+    this.overlay.addChild(this.gameOverOverlay);
+    this.gameOverOverlay.visible = false;
+    this.lessons = [
+      'Save & invest regularly.',
+      'Pay on time to build credit.',
+      'Avoid scams & overspending.'
+    ];
+    this.lessonIdx = 0;
+    this.lessonTimer = 0;
+    this.lastInput = 0;
+    this.animPulse = 0;
+    this.animPulseDir = 1;
+    this.animLean = 0;
+    this.animLeanTarget = 0;
+    this.animLeanTimer = 0;
+    this.animCatchPulse = 0;
+    this.animCatchPulseDir = 1;
+    this.animCatchPulseTime = 0;
+    this.animCatchPulseMax = 12;
+    this.animFade = 1;
+    this.animFadeDir = -1;
+    this.animFadeTime = 0;
+    this.animFadeMax = 30;
+    this.setupEvents();
+    this.introText = this.makeIntroText();
+    this.bg.addChild(this.introText);
+    this.updateUI();
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+  }
+  setupBackground() {
+    let g = new PIXI.Graphics();
+    let grad = this.bgGradient();
+    g.beginTextureFill({ texture: grad });
+    g.drawRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    g.endFill();
+    for (let y = UI_HEIGHT; y < GAME_HEIGHT; y += 50) {
+      g.lineStyle(1, 0xffffff, 0.05);
+      g.moveTo(0, y);
+      g.lineTo(GAME_WIDTH, y);
+    }
+    this.bg.addChild(g);
+  }
+  bgGradient() {
+    let c = document.createElement('canvas');
+    c.width = 1;
+    c.height = GAME_HEIGHT;
+    let ctx = c.getContext('2d');
+    let grad = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+    grad.addColorStop(0, '#87CEEB');
+    grad.addColorStop(1, '#E0F6FF');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1, GAME_HEIGHT);
+    return PIXI.Texture.from(c);
+  }
+  drawUI() {
+    this.ui.removeChildren();
+    this.uiBg = new PIXI.Graphics();
+    this.uiBg.beginFill(0x000000, 0.15);
+    this.uiBg.drawRect(0, 0, GAME_WIDTH, UI_HEIGHT);
+    this.uiBg.endFill();
+    this.ui.addChild(this.uiBg);
+    this.scoreText = new PIXI.Text('0', { fontFamily: 'Arial', fontSize: 40, fill: 0xffffff, fontWeight: 'bold' });
+    this.scoreText.anchor.set(0.5, 0.5);
+    this.scoreText.x = GAME_WIDTH / 2;
+    this.scoreText.y = UI_HEIGHT / 2;
+    this.ui.addChild(this.scoreText);
+    this.streakText = new PIXI.Text('x1', { fontFamily: 'Arial', fontSize: 24, fill: 0xfff176, fontWeight: 'bold' });
+    this.streakText.anchor.set(0, 0.5);
+    this.streakText.x = GAME_WIDTH / 2 + 70;
+    this.streakText.y = UI_HEIGHT / 2;
+    this.ui.addChild(this.streakText);
+    this.hearts = [];
+    for (let i = 0; i < MAX_LIVES; ++i) {
+      let h = this.drawHeart(HEART_SIZE, 0xff1744);
+      h.x = 16 + i * (HEART_SIZE + 8);
+      h.y = UI_HEIGHT / 2;
+      h.anchor.set(0.5, 0.5);
+      this.ui.addChild(h);
+      this.hearts.push(h);
+    }
+    this.pauseBtn = this.drawPauseBtn();
+    this.pauseBtn.x = GAME_WIDTH - 40;
+    this.pauseBtn.y = UI_HEIGHT / 2;
+    this.pauseBtn.interactive = true;
+    this.pauseBtn.eventMode = 'static';
+    this.pauseBtn.on('pointerdown', () => this.togglePause());
+    this.ui.addChild(this.pauseBtn);
+  }
+  updateUI() {
+    this.scoreText.text = this.score;
+    this.streakText.text = 'x' + this.streak;
+    for (let i = 0; i < MAX_LIVES; ++i) {
+      let h = this.hearts[i];
+      h.alpha = i < this.lives ? 1 : 0.25;
+      h.tint = i < this.lives ? 0xff1744 : 0xcccccc;
+    }
+  }
+  drawHeart(size, color) {
+    let g = new PIXI.Graphics();
+    let s = size / 32;
+    g.beginFill(color);
+    g.moveTo(16 * s, 29 * s);
+    g.bezierCurveTo(2 * s, 18 * s, 0, 8 * s, 8 * s, 4 * s);
+    g.bezierCurveTo(16 * s, 0, 24 * s, 4 * s, 24 * s, 4 * s);
+    g.bezierCurveTo(32 * s, 8 * s, 30 * s, 18 * s, 16 * s, 29 * s);
+    g.endFill();
+    let sprite = new PIXI.Sprite(app.renderer.generateTexture(g));
+    sprite.anchor.set(0.5, 0.5);
+    return sprite;
+  }
+  drawPauseBtn() {
+    let g = new PIXI.Graphics();
+    g.beginFill(0xffffff, 0.9);
+    g.drawRoundedRect(-16, -16, 32, 32, 8);
+    g.endFill();
+    g.beginFill(0x666666);
+    g.drawRect(-7, -8, 5, 16);
+    g.drawRect(2, -8, 5, 16);
+    g.endFill();
+    let s = new PIXI.Sprite(app.renderer.generateTexture(g));
+    s.anchor.set(0.5, 0.5);
+    return s;
+  }
+  makeIntroText() {
+    let c = new PIXI.Container();
+    let t1 = new PIXI.Text('Smart Money Collector', { fontFamily: 'Arial', fontSize: 44, fill: 0xffffff, fontWeight: 'bold' });
+    t1.anchor.set(0.5, 0.5);
+    t1.x = GAME_WIDTH / 2;
+    t1.y = GAME_HEIGHT / 2 - 40;
+    let t2 = new PIXI.Text('Catch good habits, avoid bad!', { fontFamily: 'Arial', fontSize: 28, fill: 0xfff176, fontWeight: 'bold' });
+    t2.anchor.set(0.5, 0.5);
+    t2.x = GAME_WIDTH / 2;
+    t2.y = GAME_HEIGHT / 2 + 10;
+    c.addChild(t1, t2);
+    c.alpha = 1;
+    return c;
+  }
+  makePlayer() {
+    let c = new PIXI.Container();
+    c.x = GAME_WIDTH / 2;
+    c.y = PLAYER_Y;
+    let g = new PIXI.Graphics();
+    g.beginFill(0x212121);
+    g.drawEllipse(0, 30, 16, 36);
+    g.drawRect(-10, 10, 20, 40);
+    g.endFill();
+    g.beginFill(0x212121);
+    g.drawCircle(0, -30, 18);
+    g.endFill();
+    g.beginFill(0x212121);
+    g.moveTo(-10, 28);
+    g.lineTo(-28, 60);
+    g.lineTo(-20, 64);
+    g.lineTo(0, 38);
+    g.lineTo(20, 64);
+    g.lineTo(28, 60);
+    g.lineTo(10, 28);
+    g.endFill();
+    let s = new PIXI.Sprite(app.renderer.generateTexture(g));
+    s.anchor.set(0.5, 0.5);
+    c.addChild(s);
+    let hitbox = new PIXI.Graphics();
+    hitbox.beginFill(0x000000, 0);
+    hitbox.drawRect(-PLAYER_HITBOX_W / 2, -10, PLAYER_HITBOX_W, PLAYER_HITBOX_H);
+    hitbox.endFill();
+    c.addChild(hitbox);
+    return { container: c, sprite: s, hitbox: hitbox };
+  }
+  setupEvents() {
+    window.addEventListener('keydown', (e) => {
+      if (this.state === STATE_PLAY) {
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.inputLeft = true;
+        if (e.code === 'ArrowRight' || e.code === 'KeyD') this.inputRight = true;
+        if (e.code === 'Space') this.togglePause();
+      } else if (this.state === STATE_PAUSE) {
+        if (e.code === 'Space') this.togglePause();
+      } else if (this.state === STATE_GAMEOVER) {
+        if (e.code === 'Space' || e.code === 'Enter') this.restart();
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.inputLeft = false;
+      if (e.code === 'ArrowRight' || e.code === 'KeyD') this.inputRight = false;
+    });
+    app.view.addEventListener('touchstart', (e) => {
+      if (this.state === STATE_PLAY) {
+        let t = e.changedTouches[0];
+        if (t) {
+          this.inputTouchId = t.identifier;
+          this.inputTouchX = t.clientX;
+        }
+      }
+    }, { passive: false });
+    app.view.addEventListener('touchmove', (e) => {
+      if (this.state === STATE_PLAY && this.inputTouchId !== null) {
+        for (let i = 0; i < e.changedTouches.length; ++i) {
+          let t = e.changedTouches[i];
+          if (t.identifier === this.inputTouchId) {
+            this.inputTouchX = t.clientX;
+            break;
+          }
+        }
+      }
+    }, { passive: false });
+    app.view.addEventListener('touchend', (e) => {
+      for (let i = 0; i < e.changedTouches.length; ++i) {
+        let t = e.changedTouches[i];
+        if (t.identifier === this.inputTouchId) {
+          this.inputTouchId = null;
+          this.inputTouchX = null;
+        }
+      }
+    }, { passive: false });
+    app.view.addEventListener('mousedown', (e) => {
+      if (this.state === STATE_PLAY) {
+        this.inputTouchX = e.offsetX;
+      }
+    });
+    app.view.addEventListener('mousemove', (e) => {
+      if (this.state === STATE_PLAY && e.buttons) {
+        this.inputTouchX = e.offsetX;
+      }
+    });
+    app.view.addEventListener('mouseup', () => {
+      this.inputTouchX = null;
+    });
+  }
+  update(delta) {
+    if (this.state === STATE_INTRO) {
+      this.introAlpha += this.fadeDir * (1 / 60) * 0.5;
+      if (this.introAlpha <= 0) {
+        this.introAlpha = 0;
+        this.state = STATE_PLAY;
+        this.bg.removeChild(this.introText);
+      } else {
+        this.introText.alpha = this.introAlpha;
+      }
+      return;
+    }
+    if (this.state === STATE_PAUSE) {
+      this.pauseAlpha += 0.1 * (1 - this.pauseAlpha);
+      this.pauseOverlay.clear();
+      this.pauseOverlay.beginFill(0x000000, this.pauseAlpha * 0.6);
+      this.pauseOverlay.drawRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+      this.pauseOverlay.endFill();
+      if (!this.pauseOverlay.label) {
+        let t = new PIXI.Text('Paused', { fontFamily: 'Arial', fontSize: 48, fill: 0xffffff, fontWeight: 'bold' });
+        t.anchor.set(0.5, 0.5);
+        t.x = GAME_WIDTH / 2;
+        t.y = GAME_HEIGHT / 2;
+        this.pauseOverlay.addChild(t);
+        this.pauseOverlay.label = t;
+      }
+      return;
+    }
+    if (this.state === STATE_GAMEOVER) {
+      this.gameOverAlpha += 0.1 * (1 - this.gameOverAlpha);
+      this.gameOverOverlay.alpha = this.gameOverAlpha;
+      this.lessonTimer += delta;
+      if (this.lessonTimer > 120) {
+        this.lessonTimer = 0;
+        this.lessonIdx = (this.lessonIdx + 1) % this.lessons.length;
+        this.showGameOverLessons();
+      }
+      return;
+    }
+    if (this.shakeTime > 0) {
+      this.shakeTime -= delta;
+      this.shakeMag = SHAKE_MAG * (this.shakeTime / SHAKE_DURATION);
+      this.world.x = (Math.random() - 0.5) * this.shakeMag;
+      this.world.y = (Math.random() - 0.5) * this.shakeMag;
+    } else {
+      this.world.x = 0;
+      this.world.y = 0;
+    }
+    this.elapsed += delta / 60;
+    this.rampTimer += delta / 60;
+    if (!this.decoyOn && this.elapsed >= DECOY_INTRO_TIME) {
+      this.decoyOn = true;
+    }
+    if (this.rampTimer >= RAMP_INTERVAL) {
+      this.rampTimer = 0;
+      this.speed = Math.min(MAX_SPEED, this.speed * 1.1);
+      this.spawnRate = Math.min(MAX_SPAWN_RATE, this.spawnRate + 1);
+    }
+    this.spawnTimer += delta / 60;
+    let spawnInt = 1 / this.spawnRate;
+    while (this.spawnTimer >= spawnInt) {
+      this.spawnTimer -= spawnInt;
+      if (this.items.length < 50) {
+        this.spawnItem();
+      }
+    }
+    this.updatePlayer(delta);
+    this.updateItems(delta);
+    this.updateParticles(delta);
+    this.updateUI();
+  }
+  updatePlayer(delta) {
+    let move = 0;
+    if (this.inputLeft) move -= 1;
+    if (this.inputRight) move += 1;
+    if (this.inputTouchX !== null) {
+      let tx = (this.inputTouchX / app.view.width) * GAME_WIDTH;
+      let px = this.player.container.x;
+      let dx = tx - px;
+      if (Math.abs(dx) > 5) move = dx > 0 ? 1 : -1;
+      else move = 0;
+    }
+    let v = 8 * move;
+    let nx = this.player.container.x + v;
+    nx = Math.max(SPAWN_MARGIN, Math.min(GAME_WIDTH - SPAWN_MARGIN, nx));
+    this.player.container.x = nx;
+    this.animLeanTarget = move * 0.09;
+    this.animLean += (this.animLeanTarget - this.animLean) * 0.2;
+    this.player.sprite.rotation = this.animLean;
+    if (this.animCatchPulseTime > 0) {
+      this.animCatchPulseTime -= delta;
+      let p = 1.1 - (this.animCatchPulseTime / this.animCatchPulseMax) * 0.1;
+      this.player.container.scale.set(p, p);
+    } else {
+      this.player.container.scale.set(1, 1);
+    }
+  }
+  spawnItem() {
+    let isDecoy = this.decoyOn && Math.random() < 0.2;
+    let isGood = !isDecoy ? Math.random() < 0.5 : DECOY_ITEMS[Math.floor(Math.random() * DECOY_ITEMS.length)].good;
+    let itemType, label, decoy;
+    if (isDecoy) {
+      let d = DECOY_ITEMS[Math.floor(Math.random() * DECOY_ITEMS.length)];
+      itemType = d.key;
+      label = d.label;
+      decoy = true;
+      isGood = d.good;
+    } else if (isGood) {
+      let d = GOOD_ITEMS[Math.floor(Math.random() * GOOD_ITEMS.length)];
+      itemType = d.key;
+      label = d.label;
+      decoy = false;
+    } else {
+      let d = BAD_ITEMS[Math.floor(Math.random() * BAD_ITEMS.length)];
+      itemType = d.key;
+      label = d.label;
+      decoy = false;
+    }
+    let x = SPAWN_MARGIN + Math.random() * (GAME_WIDTH - 2 * SPAWN_MARGIN);
+    let y = -ITEM_SIZE;
+    let item = this.createItemSprite(itemType, isGood, label, decoy);
+    item.x = x;
+    item.y = y;
+    item.vy = this.speed + Math.random();
+    item.good = isGood;
+    item.decoy = decoy;
+    item.caught = false;
+    this.world.addChild(item);
+    this.items.push(item);
+  }
+  createItemSprite(type, good, label, decoy) {
+    let g = new PIXI.Graphics();
+    if (good) g.tint = 0x4caf50;
+    else g.tint = 0xf44336;
+    if (decoy) g.tint = good ? 0x8bc34a : 0xef5350;
+    if (type === 'coin') {
+      g.beginFill(good ? 0xffeb3b : 0xbdbdbd);
+      g.drawCircle(0, 0, 18);
+      g.endFill();
+      g.lineStyle(2, 0xffffff, 0.6);
+      for (let i = 0; i < 6; ++i) {
+        let a = i * Math.PI / 3;
+        g.moveTo(Math.cos(a) * 10, Math.sin(a) * 10);
+        g.lineTo(Math.cos(a) * 16, Math.sin(a) * 16);
+      }
+    } else if (type === 'bill') {
+      g.beginFill(good ? 0x81c784 : 0xe57373);
+      g.drawRoundedRect(-16, -10, 32, 20, 5);
+      g.endFill();
+      g.lineStyle(2, 0xffffff, 0.7);
+      g.drawRect(-10, -6, 20, 12);
+      g.moveTo(-12, -8);
+      g.lineTo(12, 8);
+    } else if (type === 'card') {
+      g.beginFill(good ? 0x388e3c : 0xb71c1c);
+      g.drawRoundedRect(-18, -12, 36, 24, 4);
+      g.endFill();
+      if (good) {
+        g.lineStyle(2, 0xffffff, 0.8);
+        g.moveTo(-8, 4);
+        g.lineTo(-2, 10);
+        g.lineTo(10, -6);
+      } else {
+        g.lineStyle(2, 0xff1744, 0.8);
+        g.moveTo(-8, -6);
+        g.lineTo(8, 6);
+      }
+    } else if (type === 'etf') {
+      g.beginFill(0x3949ab);
+      g.drawRect(-16, -12, 32, 24);
+      g.endFill();
+      g.lineStyle(2, 0xffffff, 0.8);
+      g.moveTo(-10, 4);
+      g.lineTo(-4, -2);
+      g.lineTo(4, 2);
+      g.lineTo(10, -6);
+      g.moveTo(10, -6);
+      g.lineTo(10, 6);
+      g.lineTo(-10, 6);
+      g.lineTo(-10, 4);
+    } else if (type === 'overdue') {
+      g.beginFill(0xffffff);
+      g.drawRect(-14, -16, 28, 32);
+      g.endFill();
+      g.lineStyle(2, 0xf44336, 0.7);
+      g.drawRect(-12, -14, 24, 28);
+      g.moveTo(-10, -10);
+      g.lineTo(10, 10);
+      g.moveTo(-10, 10);
+      g.lineTo(10, -10);
+    } else if (type === 'phish') {
+      g.beginFill(0xfff9c4);
+      g.drawRect(-16, -12, 32, 24);
+      g.endFill();
+      g.lineStyle(2, 0xf44336, 0.7);
+      g.moveTo(-10, -6);
+      g.lineTo(0, 6);
+      g.lineTo(10, -6);
+      g.moveTo(0, 10);
+      g.lineTo(0, 6);
+      g.moveTo(-10, -6);
+      g.lineTo(10, -6);
+    } else if (type === 'bag') {
+      g.beginFill(0x8d6e63);
+      g.drawRect(-14, -10, 28, 20);
+      g.endFill();
+      g.beginFill(0x6d4c41);
+      g.drawRect(-10, -16, 20, 8);
+      g.endFill();
+      g.lineStyle(2, 0xf44336, 0.7);
+      g.moveTo(-8, 0);
+      g.lineTo(8, 0);
+    } else if (type === 'ticket') {
+      g.beginFill(0xffd600);
+      g.drawRect(-18, -8, 36, 16);
+      g.endFill();
+      g.lineStyle(2, 0xf44336, 0.7);
+      g.drawRect(-16, -6, 32, 12);
+      g.moveTo(-12, 0);
+      g.lineTo(12, 0);
+    }
+    let s = new PIXI.Sprite(app.renderer.generateTexture(g));
+    s.anchor.set(0.5, 0.5);
+    let c = new PIXI.Container();
+    c.addChild(s);
+    let labelBg = new PIXI.Graphics();
+    let col = good ? 0x4caf50 : 0xf44336;
+    if (decoy) col = good ? 0x7cb342 : 0xe57373;
+    labelBg.beginFill(col);
+    labelBg.drawRoundedRect(-ITEM_LABEL_W / 2, -ITEM_SIZE / 2 - ITEM_LABEL_H - 2, ITEM_LABEL_W, ITEM_LABEL_H, 10);
+    labelBg.endFill();
+    c.addChild(labelBg);
+    let t = new PIXI.Text(label, {
+      fontFamily: 'Arial',
+      fontSize: ITEM_LABEL_FONT_SIZE,
+      fill: 0xffffff,
+      fontWeight: 'bold'
+    });
+    t.anchor.set(0.5, 0.5);
+    t.x = 0;
+    t.y = -ITEM_SIZE / 2 - ITEM_LABEL_H / 2 - 2;
+    c.addChild(t);
+    c.width = ITEM_SIZE;
+    c.height = ITEM_SIZE;
+    c.label = t;
+    c.sprite = s;
+    c.type = type;
+    return c;
+  }
+  updateItems(delta) {
+    for (let i = this.items.length - 1; i >= 0; --i) {
+      let item = this.items[i];
+      item.y += item.vy * delta;
+      if (!item.caught) {
+        let px = this.player.container.x;
+        let py = this.player.container.y;
+        let ix = item.x;
+        let iy = item.y;
+        let hit = Math.abs(ix - px) < (PLAYER_HITBOX_W / 2 + ITEM_SIZE / 2 - 4)
+          && Math.abs(iy - py + 30) < (PLAYER_HITBOX_H / 2 + ITEM_SIZE / 2 - 10);
+        if (hit) {
+          item.caught = true;
+          if (item.good) {
+            this.score += this.streak;
+            this.streak = Math.min(STREAK_MAX, this.streak + 1);
+            this.spawnParticles(px, py - 24, 0xfff176);
+            this.animCatchPulseTime = this.animCatchPulseMax;
+          } else {
+            this.score = Math.max(0, this.score - 1);
+            this.streak = 1;
+            this.lives -= 1;
+            this.shakeTime = SHAKE_DURATION;
+            if (this.lives <= 0) this.endGame();
+          }
+          this.updateUI();
+          this.fadeOutItem(item);
+          continue;
+        }
+      }
+      if (item.y > GAME_HEIGHT + ITEM_SIZE) {
+        this.fadeOutItem(item);
+        continue;
+      }
+    }
+  }
+  fadeOutItem(item) {
+    let c = item;
+    let t = 0;
+    let d = 12;
+    let s0 = 1, s1 = 0.1;
+    let fade = () => {
+      t++;
+      let p = t / d;
+      c.alpha = 1 - p;
+      c.scale.set(s0 + (s1 - s0) * p, s0 + (s1 - s0) * p);
+      if (t < d) {
+        requestAnimationFrame(fade);
+      } else {
+        if (c.parent) c.parent.removeChild(c);
+        let idx = this.items.indexOf(c);
+        if (idx >= 0) this.items.splice(idx, 1);
+      }
+    };
+    fade();
+  }
+  spawnParticles(x, y, color) {
+    for (let i = 0; i < PARTICLE_COUNT; ++i) {
+      let p = new PIXI.Graphics();
+      p.beginFill(color);
+      p.drawCircle(0, 0, 3 + Math.random() * 3);
+      p.endFill();
+      let s = new PIXI.Sprite(app.renderer.generateTexture(p));
+      s.x = x;
+      s.y = y;
+      s.vx = (Math.random() - 0.5) * 6;
+      s.vy = -2 - Math.random() * 2;
+      s.life = PARTICLE_DURATION;
+      s.alpha = 1;
+      this.world.addChild(s);
+      this.particles.push(s);
+    }
+  }
+  updateParticles(delta) {
+    for (let i = this.particles.length - 1; i >= 0; --i) {
+      let p = this.particles[i];
+      p.x += p.vx * delta;
+      p.y += p.vy * delta;
+      p.vy += 0.2 * delta;
+      p.life -= delta;
+      p.alpha = Math.max(0, p.life / PARTICLE_DURATION);
+      if (p.life <= 0) {
+        if (p.parent) p.parent.removeChild(p);
+        this.particles.splice(i, 1);
+      }
+    }
+  }
+  togglePause() {
+    if (this.state === STATE_PLAY) {
+      this.state = STATE_PAUSE;
+      this.overlay.visible = true;
+      this.pauseAlpha = 0;
+      this.pauseOverlay.visible = true;
+      this.gameOverOverlay.visible = false;
+    } else if (this.state === STATE_PAUSE) {
+      this.state = STATE_PLAY;
+      this.overlay.visible = false;
+      this.pauseOverlay.visible = false;
+    }
+  }
+  endGame() {
+    this.state = STATE_GAMEOVER;
+    this.overlay.visible = true;
+    this.gameOverOverlay.visible = true;
+    this.gameOverOverlay.removeChildren();
+    let bg = new PIXI.Graphics();
+    bg.beginFill(0x000000, 0.7);
+    bg.drawRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    bg.endFill();
+    this.gameOverOverlay.addChild(bg);
+    let t1 = new PIXI.Text('Game Over', { fontFamily: 'Arial', fontSize: 52, fill: 0xffffff, fontWeight: 'bold' });
+    t1.anchor.set(0.5, 0.5);
+    t1.x = GAME_WIDTH / 2;
+    t1.y = GAME_HEIGHT / 2 - 120;
+    this.gameOverOverlay.addChild(t1);
+    let t2 = new PIXI.Text('Score: ' + this.score, { fontFamily: 'Arial', fontSize: 42, fill: 0xfff176, fontWeight: 'bold' });
+    t2.anchor.set(0.5, 0.5);
+    t2.x = GAME_WIDTH / 2;
+    t2.y = GAME_HEIGHT / 2 - 60;
+    this.gameOverOverlay.addChild(t2);
+    if (this.score > this.bestScore) {
+      this.bestScore = this.score;
+      localStorage.setItem('smc_best', this.bestScore);
+    }
+    let t3 = new PIXI.Text('Best: ' + this.bestScore, { fontFamily: 'Arial', fontSize: 32, fill: 0xffffff, fontWeight: 'bold' });
+    t3.anchor.set(0.5, 0.5);
+    t3.x = GAME_WIDTH / 2;
+    t3.y = GAME_HEIGHT / 2 - 20;
+    this.gameOverOverlay.addChild(t3);
+    this.lessonIdx = 0;
+    this.lessonTimer = 0;
+    this.showGameOverLessons();
+    let btn = this.drawRestartBtn();
+    btn.x = GAME_WIDTH / 2;
+    btn.y = GAME_HEIGHT / 2 + 120;
+    btn.interactive = true;
+    btn.eventMode = 'static';
+    btn.on('pointerdown', () => this.restart());
+    this.gameOverOverlay.addChild(btn);
+    this.gameOverAlpha = 0;
+  }
+  showGameOverLessons() {
+    if (this.lessonLabel) this.gameOverOverlay.removeChild(this.lessonLabel);
+    let t = new PIXI.Text(this.lessons[this.lessonIdx], { fontFamily: 'Arial', fontSize: 28, fill: 0x81d4fa, fontWeight: 'bold' });
+    t.anchor.set(0.5, 0.5);
+    t.x = GAME_WIDTH / 2;
+    t.y = GAME_HEIGHT / 2 + 40;
+    this.gameOverOverlay.addChild(t);
+    this.lessonLabel = t;
+  }
+  drawRestartBtn() {
+    let g = new PIXI.Graphics();
+    g.beginFill(0x4caf50);
+    g.drawRoundedRect(-100, -28, 200, 56, 20);
+    g.endFill();
+    let s = new PIXI.Sprite(app.renderer.generateTexture(g));
+    s.anchor.set(0.5, 0.5);
+    let t = new PIXI.Text('Restart', { fontFamily: 'Arial', fontSize: 32, fill: 0xffffff, fontWeight: 'bold' });
+    t.anchor.set(0.5, 0.5);
+    s.addChild(t);
+    t.x = 0;
+    t.y = 0;
+    return s;
+  }
+  restart() {
+    this.state = STATE_INTRO;
+    this.introAlpha = 1;
+    this.fadeDir = -1;
+    this.fadeTimer = 0;
+    this.score = 0;
+    this.streak = 1;
+    this.lives = MAX_LIVES;
+    this.spawnTimer = 0;
+    this.spawnRate = START_SPAWN_RATE;
+    this.speed = START_SPEED;
+    this.rampTimer = 0;
+    this.decoyOn = false;
+    this.items.forEach(i => { if (i.parent) i.parent.removeChild(i); });
+    this.items = [];
+    this.particles.forEach(p => { if (p.parent) p.parent.removeChild(p); });
+    this.particles = [];
+    this.overlay.visible = false;
+    this.pauseOverlay.visible = false;
+    this.gameOverOverlay.visible = false;
+    this.player.container.x = GAME_WIDTH / 2;
+    this.updateUI();
+    this.bg.addChild(this.introText);
+    this.introText.alpha = 1;
+  }
+  resize() {
+    let w = window.innerWidth, h = window.innerHeight;
+    let scale = Math.min(w / GAME_WIDTH, h / GAME_HEIGHT);
+    app.stage.scale.set(scale, scale);
+    app.renderer.resize(GAME_WIDTH * scale, GAME_HEIGHT * scale);
+  }
+}
+let game = new Game();
+app.ticker.add(delta => game.update(delta));
+    </script>
+</body>
+</html>
